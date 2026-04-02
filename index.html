@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="比索计算">
+  <meta name="theme-color" content="#0a1628">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>比索提取器 · Peso Extractor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a1628;
+      --surface: #111e35;
+      --surface2: #1a2d4a;
+      --accent: #f5a623;
+      --accent2: #e8d5a0;
+      --text: #e8eaf0;
+      --muted: #6b7fa3;
+      --green: #4ade80;
+      --border: rgba(245,166,35,0.18);
+      --radius: 16px;
+      --font: 'Inter', 'Noto Sans SC', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(245,166,35,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,166,35,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px;
+      right: -80px;
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245,166,35,0.10) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-top: 8px;
+    }
+
+    .header-label {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    h1 {
+      font-family: var(--font);
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .input-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.7;
+      padding: 16px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+    }
+
+    textarea::placeholder { color: var(--muted); }
+
+    textarea:focus {
+      border-color: rgba(245,166,35,0.5);
+      box-shadow: 0 0 0 3px rgba(245,166,35,0.08);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: #0a1628;
+      border: none;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stat-card.total {
+      grid-column: 1 / -1;
+      background: var(--surface2);
+      border-color: rgba(245,166,35,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card.total::before {
+      content: '₱';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 60px;
+      font-weight: 700;
+      color: rgba(245,166,35,0.07);
+      pointer-events: none;
+    }
+
+    .stat-name {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    .stat-card:not(.total) .stat-value {
+      font-size: 24px;
+      color: var(--text);
+    }
+
+    /* Amounts list */
+    .amounts-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .amounts-header {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-bottom: 12px;
+    }
+
+    .amounts-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .amount-tag {
+      background: rgba(245,166,35,0.1);
+      border: 1px solid rgba(245,166,35,0.22);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 13px;
+      color: var(--accent2);
+      font-family: var(--font);
+      font-weight: 500;
+    }
+
+    /* Copy result box */
+    .copy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .copy-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .copy-title {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .btn-copy {
+      background: var(--accent);
+      color: #0a1628;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-copy:active { opacity: 0.8; transform: scale(0.95); }
+    .btn-copy.copied { background: var(--green); color: #0a1628; }
+
+    .copy-text {
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-family: var(--font);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: 13px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    .empty-icon { font-size: 32px; margin-bottom: 8px; display: block; opacity: 0.4; }
+
+    .btn-clear {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 10px;
+      border-radius: var(--radius);
+      width: 100%;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0.03em;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 10px;
+      color: rgba(107,127,163,0.4);
+      letter-spacing: 0.1em;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="header-label">Peso Extractor · 比索提取器</span>
+      <h1>金额统计<br><span>Amount Calculator</span></h1>
+      <p class="subtitle">粘贴文字 → 自动识别所有比索金额 / Paste text to extract PHP amounts</p>
+    </header>
+
+    <div class="input-section">
+      <span class="input-label">输入文本 · Input Text</span>
+      <textarea id="inputText" placeholder="粘贴包含金额的文字…&#10;例：付款3885比索，手续费200比索&#10;&#10;Paste text with peso amounts…"></textarea>
+      <button class="btn-primary" onclick="extract()">▶ 提取金额 · Extract Amounts</button>
+    </div>
+
+    <div id="resultsSection" class="hidden">
+      <div class="results">
+        <span class="results-label">识别结果 · Results</span>
+
+        <div class="stats-row">
+          <div class="stat-card total">
+            <span class="stat-name">总金额 · Total Amount</span>
+            <span class="stat-value" id="totalVal">0</span>
+          </div>
+          <div class="stat-card" style="grid-column:1/-1">
+            <span class="stat-name">笔数 · Count</span>
+            <span class="stat-value" id="countVal">0</span>
+          </div>
+        </div>
+
+        <div class="amounts-card">
+          <div class="amounts-header">明细 · Breakdown</div>
+          <div class="amounts-list" id="amountsList"></div>
+        </div>
+
+        <!-- Copy result -->
+        <div class="copy-card">
+          <div class="copy-header">
+            <span class="copy-title">复制统计结果 · Copy Summary</span>
+            <button class="btn-copy" id="copyBtn" onclick="copyResult()">
+              <span id="copyIcon">📋</span>
+              <span id="copyText">复制</span>
+            </button>
+          </div>
+          <div class="copy-text" id="copyPreview"></div>
+        </div>
+
+        <button class="btn-clear" onclick="clearAll()">✕ 清除重新输入 · Clear</button>
+      </div>
+    </div>
+
+    <div id="emptyState" class="hidden">
+      <div class="empty">
+        <span class="empty-icon">₱</span>
+        未找到比索金额<br>
+        <small>No peso amounts found</small>
+      </div>
+    </div>
+
+    <footer>PWA · 可添加到主屏幕 · Add to Home Screen</footer>
+  </div>
+
+  <script>
+    let lastCopyText = '';
+
+    function extract() {
+      const text = document.getElementById('inputText').value;
+      const pattern = /(\d[\d,]*)\s*比索/g;
+      const matches = [];
+      let m;
+      while ((m = pattern.exec(text)) !== null) {
+        matches.push(parseInt(m[1].replace(/,/g, '')));
+      }
+
+      const resultsSection = document.getElementById('resultsSection');
+      const emptyState = document.getElementById('emptyState');
+
+      if (matches.length === 0) {
+        resultsSection.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      const total = matches.reduce((a, b) => a + b, 0);
+
+      document.getElementById('totalVal').textContent = '₱ ' + total.toLocaleString();
+      document.getElementById('countVal').textContent = matches.length + ' 笔';
+
+      // Breakdown tags
+      const list = document.getElementById('amountsList');
+      list.innerHTML = matches.map((v, i) =>
+        `<span class="amount-tag">${i+1}. ₱${v.toLocaleString()}</span>`
+      ).join('');
+
+      // Build copy text (WeChat-friendly)
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      lastCopyText =
+`【比索金额统计】${dateStr}
+总金额：₱${total.toLocaleString()}
+笔　数：${matches.length} 笔`;
+
+      document.getElementById('copyPreview').textContent = lastCopyText;
+
+      resultsSection.classList.remove('hidden');
+      // re-trigger animation
+      const r = resultsSection.querySelector('.results');
+      r.style.animation = 'none';
+      requestAnimationFrame(() => { r.style.animation = 'slideUp 0.3s ease'; });
+
+      // reset copy button
+      const btn = document.getElementById('copyBtn');
+      btn.classList.remove('copied');
+      document.getElementById('copyIcon').textContent = '📋';
+      document.getElementById('copyText').textContent = '复制';
+    }
+
+    function copyResult() {
+      if (!lastCopyText) return;
+      navigator.clipboard.writeText(lastCopyText).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.classList.add('copied');
+        document.getElementById('copyIcon').textContent = '✅';
+        document.getElementById('copyText').textContent = '已复制！';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          document.getElementById('copyIcon').textContent = '📋';
+          document.getElementById('copyText').textContent = '复制';
+        }, 2500);
+      }).catch(() => {
+        // fallback for older iOS
+        const el = document.createElement('textarea');
+        el.value = lastCopyText;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.focus(); el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        document.getElementById('copyIcon').textContent = '✅';
+        document.getElementById('copyText').textContent = '已复制！';
+        setTimeout(() => {
+          document.getElementById('copyIcon').textContent = '📋';
+          document.getElementById('copyText').textContent = '复制';
+        }, 2500);
+      });
+    }
+
+    function clearAll() {
+      document.getElementById('inputText').value = '';
+      document.getElementById('resultsSection').classList.add('hidden');
+      document.getElementById('emptyState').classList.add('hidden');
+      lastCopyText = '';
+    }
+
+    document.getElementById('inputText').addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') extract();
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+</body>
+</html>
