@@ -1,5 +1,9 @@
-const CACHE = 'peso-v2';  // v1 → v2
-const ASSETS = ['./', './index.html', './manifest.json'];
+const CACHE = 'peso-v2';
+const ASSETS = [
+  '/Peso-Amount-Calculator/',
+  '/Peso-Amount-Calculator/index.html',
+  '/Peso-Amount-Calculator/manifest.json'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -15,6 +19,8 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
+    caches.match(e.request, { ignoreSearch: true })
+      .then(r => r || fetch(e.request))
+      .catch(() => caches.match('/Peso-Amount-Calculator/index.html'))
   );
 });
