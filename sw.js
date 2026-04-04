@@ -1,4 +1,4 @@
-const CACHE = 'peso-v1';
+const CACHE = 'peso-v2';  // v1 → v2
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
