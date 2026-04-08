@@ -1,4 +1,4 @@
-const CACHE = 'peso-v2';
+const CACHE = 'peso-v3';
 const ASSETS = [
   '/Peso-Amount-Calculator/',
   '/Peso-Amount-Calculator/index.html',
